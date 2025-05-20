@@ -25,9 +25,9 @@ class DeepNetwork:
         self._dense_combine_layer = DenseInputCombineLayer(dense_fields)
 
         # ***************** embedding layers
-        self._embed_combine_layer = EmbeddingCombineLayer(vocab_infos)
+        self._embed_combine_layer = EmbeddingCombineLayer(vocab_infos) #embeding 的权重共享
         for field_name, vocab_name in embed_fields:
-            self._embed_combine_layer.add_embedding(vocab_name=vocab_name, field_name=field_name)
+            self._embed_combine_layer.add_embedding(vocab_name=vocab_name, field_name=field_name) #
 
         self._optimize_layers = [self._embed_combine_layer]
 
@@ -59,7 +59,7 @@ class DeepNetwork:
         :param features: dict, mapping from field=>dense ndarray or field=>SparseInput
         :return: logits, [batch_size]
         """
-        dense_input = self._dense_combine_layer.forward(features)
+        dense_input = self._dense_combine_layer.forward(features) #水平方向堆叠数组
 
         embed_input = self._embed_combine_layer.forward(features)
 

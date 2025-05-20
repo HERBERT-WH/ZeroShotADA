@@ -14,7 +14,7 @@ class BaseEstimator:
         scores = np.asarray(scores)
         labels = np.asarray(labels)
 
-        metrics = {'{}_logloss'.format(prefix): log_loss(y_true=labels, y_pred=scores),
+        metrics = {'{}_logloss'.format(prefix): log_loss(y_true=labels, y_pred=scores), #二分类的交叉注意力机制
                    '{}_auc'.format(prefix): roc_auc_score(y_true=labels, y_score=scores)}
 
         pred_labels = (scores > 0.5).astype(int)
@@ -22,7 +22,7 @@ class BaseEstimator:
 
         return metrics
 
-    def train_batch(self, features, labels):
+    def train_batch(self, features, labels): #这是一个抽象类方法，强制让子类进行实现
         """
         :param features: dict, field_name ==> dense matrix or SparseInput
         :param labels: [batch_size] ndarray
@@ -41,7 +41,7 @@ class BaseEstimator:
         scores = []
         labels = []
 
-        batch_stream = self._data_source.train_batches_per_epoch()
+        batch_stream = self._data_source.train_batches_per_epoch() #yield训练数据，一个batch
         for batch_features, batch_labels in tqdm(batch_stream):
             pred_probas = self.train_batch(batch_features, batch_labels)
 
@@ -69,7 +69,7 @@ class BaseEstimator:
             logging.info("\n=============== {}-th EPOCH".format(epoch_idx + 1))
 
             metrics = {}
-            metrics.update(self._train_epoch())
+            metrics.update(self._train_epoch()) #update:添加到字典中，类似于数组中的append，只不过这里不一定是最后的数
             metrics.update(self._eval_epoch())
 
             logging.info(metrics)

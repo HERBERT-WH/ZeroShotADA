@@ -22,7 +22,7 @@ class DenseInputCombineLayer:
             a_input = np.asarray(inputs[field_name])
             assert in_dim == a_input.shape[1]
             outputs.append(a_input)
-        return np.hstack(outputs)
+        return np.hstack(outputs) #用于水平方向堆叠数组
 
 
 class SparseInput:

@@ -8,6 +8,7 @@ import bisect
 import argparse
 from tqdm import tqdm
 
+#制定一个字典，定义每一个filed的内容（这里并不是全部的，因为有一部分数值相关的特征需要用bucket来表示）
 VOCAB_LISTS = {
     'education': ['Bachelors',
                   'HS-grad',
@@ -67,12 +68,13 @@ VOCAB_LISTS = {
 }
 
 VOCAB_MAPPINGS = {field: {featname: idx for idx, featname in enumerate(featnames)} for field, featnames in
-                  VOCAB_LISTS.items()}
+                  VOCAB_LISTS.items()} #将filed中的每个feature映射为一个index
 
-AGE_BOUNDARIES = [18, 25, 30, 35, 40, 45, 50, 55, 60, 65]
+AGE_BOUNDARIES = [18, 25, 30, 35, 40, 45, 50, 55, 60, 65] #设置年龄的边界
 
 DENSE_FIELDS = ['age', 'education_num', 'capital_gain', 'capital_loss', 'hours_per_week']
 
+#这里是否是提前算好的？（均值和标准差）
 DENSE_LOG_MEAN_STD = {'age': (3.6183599219864133, 0.35003117354646957),
                       'education_num': (2.372506496597371, 0.27381608590073075),
                       'capital_gain': (0.7346209104536965, 2.4547377400238553),
@@ -82,18 +84,19 @@ DENSE_LOG_MEAN_STD = {'age': (3.6183599219864133, 0.35003117354646957),
 CATEGORY_FIELDS = ['education', 'marital_status', 'relationship', 'workclass', 'occupation', 'age_buckets']
 
 
+#注意数值型特征要和类别型特征区分开来看
 class Dataset:
     def __init__(self, infname):
         with open(infname, "rt") as fin:
-            self._field_names = fin.readline().strip().split(',')
-            self._lines = [line.strip() for line in fin]
+            self._field_names = fin.readline().strip().split(',') #读取第一行并分割成字段名称列表
+            self._lines = [line.strip() for line in fin] #上面使用read之后，文件会将指针自动下移
 
-    @property
-    def n_examples(self):
+    @property #可以将方法当做属性来访问
+    def n_examples(self): 
         return len(self._lines)
 
     def parse_line(self, line):
-        contents = dict(zip(self._field_names, line.split(',')))
+        contents = dict(zip(self._field_names, line.split(','))) #将line中的每个字段名称与对应的值对应起来
         features = {}
 
         # ------------- label
@@ -105,26 +108,28 @@ class Dataset:
             txt_value = contents[field]
             if txt_value in vocab_mapping:
                 # 找不到的，算缺失，不包含进特征
-                features[field] = vocab_mapping[txt_value]
+                features[field] = vocab_mapping[txt_value] #记录每个filed下所对应对的index 也就是得到了对应的特征是多少
 
         age = int(contents['age'])
-        features['age_buckets'] = bisect.bisect(AGE_BOUNDARIES, age)
+        features['age_buckets'] = bisect.bisect(AGE_BOUNDARIES, age) #将年龄映射到对应的bucket中
 
         # ------------- numeric features
         for field in DENSE_FIELDS:
             raw_value = float(contents[field])
             logmean, logstd = DENSE_LOG_MEAN_STD[field]
-            features[field] = (np.log1p(raw_value) - logmean) / logstd
+            features[field] = (np.log1p(raw_value) - logmean) / logstd #log1p(x) = log(x+1)，能够处理0的情况
 
         return features, label
+
+
 
     def get_batch_stream(self, batch_size, n_repeat=1):
         n_repeat = n_repeat if n_repeat > 0 else sys.maxsize
 
-        for _ in range(n_repeat):
+        for _ in range(n_repeat): #相当于是多少个epoch
             random.shuffle(self._lines)
 
-            for batch_lines in utils.chunk(self._lines, batch_size):
+            for batch_lines in utils.chunk(self._lines, batch_size): #随机的返回的[batch_size, len(line)]
                 Xs = {}
                 ys = []
 
@@ -142,7 +147,7 @@ class Dataset:
                     # 内层的list，对应该样本在field下的值。
                     # 某样本可以在某个field下有多个dense值，比如当你非要用OHE来表示categorical特征的时候
                     # 只不过，这里每个样本在每个field下只有一个值
-                    Xs[field] = []
+                    Xs[field] = [] #这里进行初始化
 
                 # ------------- loop and add
                 for example_index, line in enumerate(batch_lines):
@@ -162,11 +167,11 @@ class Dataset:
                         # wrap into one-element list, since we need to add one row
                         Xs[field].append([current_features[field]])
 
-                yield Xs, np.asarray(ys)
+                yield Xs, np.asarray(ys) #这里相当于是训练数据的准备
 
 
 def precompute_log_mean_stddev():
-    df = pd.read_csv('dataset/train.csv', usecols=DENSE_FIELDS)
+    df = pd.read_csv('dataset/train.csv', usecols=DENSE_FIELDS) #这里是计算数值型特征的均值和
     df = np.log1p(df)  # 数据有长尾, log使之更像正态一些
 
     means = df.mean()

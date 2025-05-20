@@ -13,7 +13,7 @@ class EmbeddingLayer:
 
     def __init__(self, W, vocab_name, field_name):
         """
-        :param W: dense weight matrix, [vocab_size,embed_size]
+        :param W: dense weight matrix, [vocab_size,embed_size]，底层的embedding矩阵
         :param b: bias, [embed_size]
         """
         self.vocab_name = vocab_name
@@ -35,9 +35,14 @@ class EmbeddingLayer:
         # output: [batch_size, embed_size]
         output = np.zeros((X.n_total_examples, self._W.shape[1]))
 
+
+#example_indices: 是[n_non_zeros]的整数数组，表示样本在batch中的序号。而且要求其中的数值是从小到大排好序的
+#feature_ids: 是[n_non_zeros]的整数数组，表示非零特征的序号，可以重复
+# feature_values: 是[n_non_zeros]的浮点数组，表示非零特征的数值
+
         for example_idx, feat_id, feat_val in X.iterate_non_zeros():
-            embedding = self._W[feat_id, :]
-            output[example_idx, :] += embedding * feat_val
+            embedding = self._W[feat_id, :] #提取数feature_id对应的embedding向量
+            output[example_idx, :] += embedding * feat_val #表示样本在的稠密表示
 
         return output
 
@@ -50,7 +55,7 @@ class EmbeddingLayer:
 
         for example_idx, feat_id, feat_val in self._last_input.iterate_non_zeros():
             # [1,embed_size]
-            grad_from_one_example = prev_grads[example_idx, :] * feat_val
+            grad_from_one_example = prev_grads[example_idx, :] * feat_val #这也是只计算有的样本的梯度
 
             if feat_id in dW:
                 dW[feat_id] += grad_from_one_example

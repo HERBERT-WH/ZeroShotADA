@@ -18,7 +18,7 @@ class DataSource:
         self._test_dataset = Dataset('dataset/test.csv')
         self._batch_size = batch_size
 
-    def train_batches_per_epoch(self):
+    def train_batches_per_epoch(self): #yield训练数据
         return self._train_dataset.get_batch_stream(self._batch_size, n_repeat=1)
 
     def test_batches_per_epoch(self):

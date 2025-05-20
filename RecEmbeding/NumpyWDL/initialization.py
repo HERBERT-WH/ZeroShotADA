@@ -30,7 +30,7 @@ class TruncatedNormal:
             scale=stddev)
 
     def __call__(self, shape):
-        return self._rand.rvs(size=shape)
+        return self._rand.rvs(size=shape) # 从截断正态分布中随机抽取样本
 
 
 _Global_Initializers = {} # initializers which can be shared

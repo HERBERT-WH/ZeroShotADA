@@ -27,7 +27,7 @@ class WideDeepEstimator(BaseEstimator):
     def _predict_proba(self, example_idx, wide_logit):
         deep_logit = self._current_deep_logits[example_idx]
         logit = deep_logit + wide_logit
-        return 1 / (1 + np.exp(-logit))
+        return 1 / (1 + np.exp(-logit)) #sigmoid函数，将任意实数映射到(0,1)区间，表示概率
 
     def train_batch(self, features, labels):
         self._current_deep_logits = self._dnn.forward(features)
