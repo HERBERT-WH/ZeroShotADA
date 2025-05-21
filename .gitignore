@@ -37,9 +37,6 @@ venv.bak/
 .pydevproject
 .settings/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb
 
 # 操作系统
 .DS_Store
